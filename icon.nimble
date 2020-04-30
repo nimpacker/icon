@@ -13,6 +13,6 @@ bin           = @["icon"]
 # Dependencies
 
 requires "nim >= 1.2.0"
-requires "imageman"
+requires "nimPNG"
 # requires "https://github.com/numforge/laser.git"
 requires "arraymancer"
