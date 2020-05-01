@@ -30,20 +30,22 @@ type ICOOptions = object of RootObj
     name:string
     sizes:seq[int]
 
-proc convertPNGtoDIB[T](src:openarray[T],width:Natural,height:Natural,bpp:Natural):seq[T] = 
+proc convertPNGtoDIB(src:string,width:Natural,height:Natural,bpp:Natural):  seq[char] = 
     # Convert a PNG of the byte array to the DIB (Device Independent Bitmap) format.
     # PNG in color RGBA (and more), the coordinate structure is the Top/Left to Bottom/Right.
     # DIB in color BGRA, the coordinate structure is the Bottom/Left to Top/Right.
     # https://en.wikipedia.org/wiki/BMP_file_format
-    
+
     let cols = width * bpp
     let rows = height * cols
     let rowEnd = rows - cols
-    var dest = newSeq[T](src.len)
+    var dest = newSeq[char](src.len)
     var row = 0
     var col = 0
     var pos = 0
+    
     while row < rows :
+        col = 0
         while col < cols :
             # RGBA: Top/Left -> Bottom/Right
             pos = row + col
@@ -60,7 +62,6 @@ proc convertPNGtoDIB[T](src:openarray[T],width:Natural,height:Natural,bpp:Natura
             dest[pos + 3] = a
             col += bpp
         row += cols
-
     return dest
 
 proc createBitmapInfoHeader*(png:PNGResult,compression:int):Stream = 
@@ -79,6 +80,7 @@ proc createBitmapInfoHeader*(png:PNGResult,compression:int):Stream =
     result.write extract_32( 0'i32 ,littleEndian) # 4 LONG  biYPelsPerMeter
     result.write extract_32( 0'u32 ,littleEndian) # 4 DWORD biClrUsed
     result.write extract_32( 0'u32 ,littleEndian ) # 4 DWORD biClrImportant
+    result.flush()
     result.setPosition(0)
 
 proc createDirectory*(png:PNGResult,offset:int):Stream = 
@@ -98,6 +100,7 @@ proc createDirectory*(png:PNGResult,offset:int):Stream =
     result.write extract_16(bpp.uint16,littleEndian) # 2 WORD  Bit per pixel
     result.write extract_32(size.uint32,littleEndian) # 4 DWORD Bitmap (DIB) size
     result.write extract_32(offset.uint32,littleEndian) # 4 DWORD Offset
+    result.flush()
     result.setPosition(0)
 
 proc writeDirectories(pngs:openarray[PNGResult],stream: var FileStream) = 
@@ -117,12 +120,8 @@ proc createFileHeader*(count:int): Stream =
     result.write extract_16(0'u16,littleEndian) # 2 WORD Reserved
     result.write extract_16(1'u16,littleEndian) # 2 WORD Type
     result.write extract_16(count.uint16,littleEndian) # 2 WORD Image count
+    result.flush()
     result.setPosition(0)
-
-proc toString(str: seq[char]): string =
-  result = newStringOfCap(len(str))
-  for ch in str:
-    add(result, ch)
 
 proc writePNGs*(pngs:openarray[PNGResult],stream:var FileStream) = 
     # Write PNG data to the stream.
@@ -132,12 +131,11 @@ proc writePNGs*(pngs:openarray[PNGResult],stream:var FileStream) =
         header = createBitmapInfoHeader(png, BI_RGB)
         stream.write(header.readAll)
         dib = convertPNGtoDIB(png.data, png.width, png.height, BPP_ALPHA)
-        stream.write(dib)
+        stream.write(cast[string](dib))
         stream.flush
 
-proc generateICO*(images:seq[PNGResult];dir:string;options:ICOOptions ):Future[string]{.async.} = 
+proc generateICOSync*(images:seq[PNGResult];dir:string;options:ICOOptions ):string = 
     # Generate the ICO file from a PNG images.
-    
     let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
     let sizes = if options.sizes.len > 0:options.sizes else:REQUIRED_IMAGE_SIZES.toSeq
     let opt = ICOOptions(name: name,sizes:sizes.toSeq)
@@ -150,10 +148,16 @@ proc generateICO*(images:seq[PNGResult];dir:string;options:ICOOptions ):Future[s
 
     return dest
 
+proc generateICO*(images:seq[PNGResult];dir:string;options:ICOOptions ):Future[string]{.async.} = 
+    # Generate the ICO file from a PNG images.
+    return generateICOSync(images,dir,options)
+
 when isMainModule:
     import os
-    const dir = currentSourcePath.parentDir() / ".." / ".." / "tests" 
-    const nim_logo = dir / "logo_bw.png"
+    const testDir = currentSourcePath.parentDir() / ".." / ".." / "tests" 
+    const dir = getTempDir()
+    const nim_logo = testDir / "logo_bw.png"
     let img = loadPNG32(nim_logo)
     let opts = ICOOptions()
-    discard generateICO(@[img],dir,opts)
+    let path = generateICOSync(@[img],dir,opts)
+    assert readFile(path) == readFile(testDir / "app.ico")
