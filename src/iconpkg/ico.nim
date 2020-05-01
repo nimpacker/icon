@@ -30,7 +30,7 @@ type ICOOptions = object of RootObj
     name:string
     sizes:seq[int]
 
-proc convertPNGtoDIB(src:string,width:Natural,height:Natural,bpp:Natural):  seq[char] = 
+proc convertPNGtoDIB[T](src:openarray[T],width:Natural,height:Natural,bpp:Natural):  seq[T] = 
     # Convert a PNG of the byte array to the DIB (Device Independent Bitmap) format.
     # PNG in color RGBA (and more), the coordinate structure is the Top/Left to Bottom/Right.
     # DIB in color BGRA, the coordinate structure is the Bottom/Left to Top/Right.
@@ -39,11 +39,11 @@ proc convertPNGtoDIB(src:string,width:Natural,height:Natural,bpp:Natural):  seq[
     let cols = width * bpp
     let rows = height * cols
     let rowEnd = rows - cols
-    var dest = newSeq[char](src.len)
+    var dest = newSeq[T](src.len)
     var row = 0
     var col = 0
     var pos = 0
-    
+  
     while row < rows :
         col = 0
         while col < cols :
