@@ -1,6 +1,7 @@
 import sequtils,strutils,struct,streams,nimPNG,asyncdispatch,asyncfile
 import ./rle
 import ./png
+import os
 export nimPNG
 # Information of pack bit. 
 type PackBitBody = object of RootObj
@@ -73,11 +74,10 @@ let ICON_INFOS: array[10,IconInfo] = [
 # @param images File informations..
 # @return If successful image information, otherwise null.
 
-# proc imageFromIconSize(size: int,images: seq[ImageInfo]): ImageInfo  =
-#   for image in images :
-#     if (image.size === size) {
-#       return image
-#   return null
+proc imageFromIconSize(size: int,images: seq[ImageInfo]): ImageInfo  =
+  for image in images :
+    if (image.size == size):
+      return image
 
 # Create the ICNS file header.
 # @param fileSize File size.
@@ -178,7 +178,8 @@ proc createIcon(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
     var fileSize = 0
     var body:string
     for i,info in ICON_INFOS:
-      let image = images[i]
+      # let image = images[i]
+      let image = imageFromIconSize(info.size, images)
       let blk = await createIconBlock(info, image.filePath)
       body = body &  blk & $(body.len + blk.len)
       fileSize += blk.len
@@ -200,17 +201,18 @@ proc createIcon(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
 proc debugUnpackIconBlocks* (src: string,dest: string): Future[void]{.async.} =
   let file =  openAsync(src,fmRead)
   let data = await file.readAll
-  let 
+  var 
     pos = HEADER_SIZE
-    max = data.len
-  var header,typ,body:string
+  let max = data.len
+  var header,body,typ:string
+  var size:int
   while pos < max:
     header = data[pos.. pos + HEADER_SIZE]
     typ = header[0..^4]
-    size = header[4..^8] - HEADER_SIZE
+    size = parseInt(header[4..^8]) - HEADER_SIZE
 
     pos += HEADER_SIZE
-    const body = data.slice(pos, pos + size)
+    body = data[pos..^(pos+size)]
     let headerFile = openAsync(dest / typ & ".header")
     let bodyFile = openAsync(dest / typ & ".body")
     await headerFile.write(header)
@@ -227,10 +229,11 @@ proc debugUnpackIconBlocks* (src: string,dest: string): Future[void]{.async.} =
 # @param options Options.
 # @return Path of generated ICNS file.
 
-proc generateICNS(images: seq[ImageInfo],dir: string,options: ICNSOptions): Future[string]{.async.} =
+proc generateICNS*(images: seq[ImageInfo],dir: string,options: ICNSOptions): Future[string]{.async.} =
   let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
   let sizes = if options.sizes.len > 0:options.sizes else:REQUIRED_IMAGE_SIZES.toSeq
   let opt = ICNSOptions(name: name,sizes:sizes.toSeq)
   let dest = dir / (opt.name & FILE_EXTENSION)
-  await createIcon(targets, dest)
+  let targets = filterImagesBySizes(images, opt.sizes)
+  discard await createIcon(targets, dest)
   return dest
