@@ -63,13 +63,15 @@ proc unpackBits*(src: seq[int]):seq[int] =
   var 
     i = 0
     max = src.len
+    count:int
+    total:int
   while  i < max:
-    let count = toInt8(toUInt8(src[i]))
+    count = toInt8(toUInt8(src[i]))
     if (count == -128) :
       # Do nothing, skip it
       discard
     elif 0 <= count :
-      let total = count + 1
+      total = count + 1
       block:
         var j = 0;
         while ( j < total) :
@@ -77,7 +79,7 @@ proc unpackBits*(src: seq[int]):seq[int] =
           inc j
       i += total
     else :
-      let total = abs(count) + 1
+      total = abs(count) + 1
       block:
         var j = 0; 
         while j < total:
@@ -100,17 +102,21 @@ proc packICNS*(src: seq[int]):seq[int] =
   var output = 0
   var input = 0;
   let srcLen =  src.len
+  var literalStart,currentData:int
+  var readBytes,repeatedBytes:int
+  var nextData:int
+  var literalBytes:int
   while input < srcLen:
-    var literalStart = input
-    var currentData = src[input]
+    literalStart = input
+    currentData = src[input]
     inc input
 
     # Read up to 128 literal bytes
     # Stop if 3 or more consecutive bytes are equal or EOF is reached
-    var readBytes = 1
-    var repeatedBytes = 0
+    readBytes = 1
+    repeatedBytes = 0
     while (input < srcLen and readBytes < 128 and repeatedBytes < 3) :
-      let nextData = src[input]
+      nextData = src[input]
       inc input
       if (nextData == currentData) :
         if (repeatedBytes == 0) :
@@ -124,7 +130,7 @@ proc packICNS*(src: seq[int]):seq[int] =
       currentData = nextData
     
 
-    var literalBytes = 0
+    literalBytes = 0
     if (repeatedBytes < 3) :
       literalBytes = readBytes
       repeatedBytes = 0
@@ -160,8 +166,7 @@ proc packICNS*(src: seq[int]):seq[int] =
     else:
       # Else move back the in pointer to ensure the repeated bytes are included in the next literal string
       input -= repeatedBytes
-    
-  
+
 
   # Trim to the actual size
   var dest = newSeq[int](output)
@@ -187,24 +192,27 @@ proc packBits*(src: seq[int]):seq[int] =
   var 
     i = 0
   let max = src.len
+  var hitMax :bool
+  var maxJ,next,current:int
+  var runLength,j,run,count:int
   while i < max:
-    let current = toUInt8(src[i])
+    current = toUInt8(src[i])
     if (i + 1 < max) :
-      let next = toUInt8(src[i + 1])
+      next = toUInt8(src[i + 1])
       if (current == next):
         dest = dest.concat(packBitsLiteralToResult(literals))
         literals = @[]
 
-        let maxJ = if  max <= i + MAX_LITERAL_LENGTH: max - i - 1 else: MAX_LITERAL_LENGTH
+        maxJ = if  max <= i + MAX_LITERAL_LENGTH: max - i - 1 else: MAX_LITERAL_LENGTH
            
-        var hitMax = true
-        var runLength = 1
-        var j = 2; 
+        hitMax = true
+        runLength = 1
+        j = 2; 
         while j <= maxJ:
-          let run = src[i + j]
+          run = src[i + j]
           if (current != run):
             hitMax = false
-            let count = toUInt8(0 - runLength)
+            count = toUInt8(0 - runLength)
             i += j - 1
             dest.add(count)
             dest.add(current)

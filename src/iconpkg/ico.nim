@@ -44,16 +44,16 @@ proc convertPNGtoDIB[T](src:openarray[T],width:Natural,height:Natural,bpp:Natura
     var row = 0
     var col = 0
     var pos = 0
-  
+    var r,g,b,a:T
     while row < rows :
         col = 0
         while col < cols :
             # RGBA: Top/Left -> Bottom/Right
             pos = row + col
-            let r = src[pos]
-            let g = src[pos + 1]
-            let b = src[pos + 2]
-            let a = src[pos + 3]
+            r = src[pos]
+            g = src[pos + 1]
+            b = src[pos + 2]
+            a = src[pos + 3]
 
             # BGRA: Right/Left -> Top/Right
             pos = rowEnd - row + col

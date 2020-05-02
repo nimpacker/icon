@@ -90,7 +90,6 @@ proc createFileHeader(fileSize: int): Stream =
   result.write FILE_HEADER_ID
   result.write extract_32(fileSize.uint32,bigEndian)
 
-
 # Create the Icon header in ICNS file.
 # @param type Type of the icon.
 # @param imageSize Size of the image data.
@@ -107,18 +106,15 @@ proc createIconHeader(typ:string, imageSize: int): Stream =
 # @return Pack bit bodies.
 
 proc createIconBlockPackBitsBodies(png: string): PackBitBody =
-  # var png = loadPNG32(image)
-  # var png = image
   var results: PackBitBody = PackBitBody( colors: @[], masks: @[] )
   var r:seq[char] = @[]
   var g:seq[char] = @[]
   var b:seq[char] = @[]
   var i = 0
   let max  = png.len
-  echo max
+
   while i + 4 < max:
     # RGB
-    # echo i
     r.add(png[i])
     g.add(png[i + 1])
     b.add(png[i + 2])
@@ -184,12 +180,13 @@ proc createIconBlock(info: IconInfo,filePath: string): Future[string]{.async.} =
 proc createIcon(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
     var fileSize = 0
     var body:string
+    var blk:string
+    var image:Option[png.ImageInfo]
     for i,info in ICON_INFOS:
-      # let image = images[i]
-      let image = imageFromIconSize(info.size, images)
+      image = imageFromIconSize(info.size, images)
       if image.isNone:
         continue
-      let blk = await createIconBlock(info, image.get.filePath)
+      blk = await createIconBlock(info, image.get.filePath)
       body = body &  blk & $(body.len + blk.len)
       fileSize += blk.len
     if fileSize == 0:
@@ -216,6 +213,7 @@ proc debugUnpackIconBlocks* (src: string,dest: string): Future[void]{.async.} =
   let max = data.len
   var header,body,typ:string
   var size:int
+  var headerFile,bodyFile:AsyncFile
   while pos < max:
     header = data[pos.. pos + HEADER_SIZE]
     typ = header[0..^4]
@@ -223,8 +221,8 @@ proc debugUnpackIconBlocks* (src: string,dest: string): Future[void]{.async.} =
 
     pos += HEADER_SIZE
     body = data[pos..^(pos+size)]
-    let headerFile = openAsync(dest / typ & ".header")
-    let bodyFile = openAsync(dest / typ & ".body")
+    headerFile = openAsync(dest / typ & ".header")
+    bodyFile = openAsync(dest / typ & ".body")
     await headerFile.write(header)
     headerFile.close
     await bodyFile.write(body)
