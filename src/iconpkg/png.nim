@@ -13,7 +13,7 @@ type ImageInfo* = object of RootObj
 proc filterImagesBySizes*(images: seq[ImageInfo], sizes: seq[int]):seq[ImageInfo] =
   return images
     .filter( proc (image:ImageInfo):bool =
-       sizes.any( proc (size:int):bool =image.size == size)
+       sizes.any( proc (size:int):bool = image.size == size)
     ).sortedByIt(it.size)
     
 

@@ -1,8 +1,9 @@
-import sequtils,strutils,struct,streams,nimPNG,asyncdispatch,asyncfile
+import sequtils,strutils,strformat,struct,streams,nimPNG,asyncdispatch,asyncfile
 import ./rle
 import ./png
 import os
 export nimPNG
+export png
 # Information of pack bit. 
 type PackBitBody = object of RootObj
   # Colors of compressed by ICNS RLE. 
@@ -70,7 +71,7 @@ let ICON_INFOS: array[10,IconInfo] = [
 ]
 
 # Select the support image from the icon size.
-# @param size Sizo of icon.
+# @param size Size of icon.
 # @param images File informations..
 # @return If successful image information, otherwise null.
 
@@ -161,6 +162,9 @@ proc createIconBlockPackBits(typ:string,mask: string,image: string): string =
 # @return Binary of icon block.
 
 proc createIconBlock(info: IconInfo,filePath: string): Future[string]{.async.} =
+  # doAssert existsFile(filePath),&"{filePath} not exists"
+  if not existsFile(filePath):
+    raise newException(IOError,&"{filePath} not exists")
   let file =  openAsync(filePath,fmRead)
   let image = await file.readAll
   case info.typ:
@@ -231,7 +235,7 @@ proc debugUnpackIconBlocks* (src: string,dest: string): Future[void]{.async.} =
 
 proc generateICNS*(images: seq[ImageInfo],dir: string,options: ICNSOptions): Future[string]{.async.} =
   let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
-  let sizes = if options.sizes.len > 0:options.sizes else:REQUIRED_IMAGE_SIZES.toSeq
+  let sizes = if options.sizes.len > 0:options.sizes else: REQUIRED_IMAGE_SIZES.toSeq
   let opt = ICNSOptions(name: name,sizes:sizes.toSeq)
   let dest = dir / (opt.name & FILE_EXTENSION)
   let targets = filterImagesBySizes(images, opt.sizes)
