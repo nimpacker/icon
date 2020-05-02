@@ -23,6 +23,8 @@ $ nimble install https://github.com/bung87/icon
 ## Usage  
 
 ``` Nim 
+import icon
+import asyncdispatch
 
 let dir = getTempDir()
 let images = REQUIRED_IMAGE_SIZES.map(proc (size:int):ImageInfo{.closure.} =
