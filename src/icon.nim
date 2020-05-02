@@ -2,4 +2,6 @@
 # uses this file as the main entry point of the application.
 
 import iconpkg/ico
+import nimPNG
 export ico
+export nimPNG

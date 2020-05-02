@@ -2,6 +2,7 @@
 import nimPNG,streams,struct,asyncdispatch
 import sequtils, strutils
 import os
+export nimPNG
 # Sizes required for the ICO file. 
 const REQUIRED_IMAGE_SIZES = [16, 24, 32, 48, 64, 128, 256]
 
@@ -26,7 +27,7 @@ const BI_RGB = 0
 # BPP (Bit Per Pixel) for Alpha PNG (RGB = 4). 
 const BPP_ALPHA = 4
 
-type ICOOptions = object of RootObj
+type ICOOptions* = object of RootObj
     name:string
     sizes:seq[int]
 
@@ -151,13 +152,3 @@ proc generateICOSync*(images:seq[PNGResult];dir:string;options:ICOOptions ):stri
 proc generateICO*(images:seq[PNGResult];dir:string;options:ICOOptions ):Future[string]{.async.} = 
     # Generate the ICO file from a PNG images.
     return generateICOSync(images,dir,options)
-
-when isMainModule:
-    import os
-    const testDir = currentSourcePath.parentDir() / ".." / ".." / "tests" 
-    const dir = getTempDir()
-    const nim_logo = testDir / "logo_bw.png"
-    let img = loadPNG32(nim_logo)
-    let opts = ICOOptions()
-    let path = generateICOSync(@[img],dir,opts)
-    assert readFile(path) == readFile(testDir / "app.ico")
