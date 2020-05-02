@@ -2,6 +2,7 @@ import sequtils,strutils,strformat,struct,streams,nimPNG,asyncdispatch,asyncfile
 import ./rle
 import ./png
 import os
+import options
 export nimPNG
 export png
 # Information of pack bit. 
@@ -75,11 +76,11 @@ let ICON_INFOS: array[10,IconInfo] = [
 # @param images File informations..
 # @return If successful image information, otherwise null.
 
-proc imageFromIconSize(size: int,images: seq[ImageInfo]): ImageInfo  =
+proc imageFromIconSize(size: int,images: seq[ImageInfo]): Option[ImageInfo]  =
   for image in images :
     if (image.size == size):
-      return image
-
+      return some(image)
+  return none(ImageInfo)
 # Create the ICNS file header.
 # @param fileSize File size.
 # @return Header data.
@@ -105,17 +106,19 @@ proc createIconHeader(typ:string, imageSize: int): Stream =
 # @param image Binary of image file.
 # @return Pack bit bodies.
 
-proc createIconBlockPackBitsBodies(image: string): PackBitBody =
+proc createIconBlockPackBitsBodies(png: string): PackBitBody =
   # var png = loadPNG32(image)
-  var png = image
+  # var png = image
   var results: PackBitBody = PackBitBody( colors: @[], masks: @[] )
   var r:seq[char] = @[]
   var g:seq[char] = @[]
   var b:seq[char] = @[]
   var i = 0
   let max  = png.len
-  while i < max:
+  echo max
+  while i + 4 < max:
     # RGB
+    # echo i
     r.add(png[i])
     g.add(png[i + 1])
     b.add(png[i + 2])
@@ -184,13 +187,16 @@ proc createIcon(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
     for i,info in ICON_INFOS:
       # let image = images[i]
       let image = imageFromIconSize(info.size, images)
-      let blk = await createIconBlock(info, image.filePath)
+      if image.isNone:
+        continue
+      let blk = await createIconBlock(info, image.get.filePath)
       body = body &  blk & $(body.len + blk.len)
       fileSize += blk.len
-
+    if fileSize == 0:
+      return false
     # Write file header and body
     var stream = openFileStream(dest,fmWrite)
-    stream.write(createFileHeader(fileSize + HEADER_SIZE))
+    stream.write(createFileHeader(fileSize + HEADER_SIZE).readAll)
     stream.write(body)
     stream.flush
     stream.close
