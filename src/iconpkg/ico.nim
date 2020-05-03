@@ -2,6 +2,8 @@
 import nimPNG,streams,struct,asyncdispatch
 import sequtils, strutils
 import os
+import ./png
+export png
 export nimPNG
 # Sizes required for the ICO file. 
 const REQUIRED_IMAGE_SIZES = [16, 24, 32, 48, 64, 128, 256]
@@ -135,20 +137,29 @@ proc writePNGs*(pngs:openarray[PNGResult],stream:var FileStream) =
         stream.write(cast[string](dib))
         stream.flush
 
-proc generateICOSync*(images:seq[PNGResult];dir:string;options:ICOOptions ):string = 
+proc readPNGs(images: seq[ImageInfo], sizes: seq[int]): seq[PNGResult] =
+  let targets = filterImagesBySizes(images, sizes)
+  return targets.map(proc (image:ImageInfo):PNGResult = loadPNG32(image.filePath))
+
+
+proc generateICO*(images:seq[ImageInfo];dir:string;options:ICOOptions ):string = 
     # Generate the ICO file from a PNG images.
     let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
     let sizes = if options.sizes.len > 0:options.sizes else:REQUIRED_IMAGE_SIZES.toSeq
     let opt = ICOOptions(name: name,sizes:sizes.toSeq)
+    let pngs = readPNGs(images, opt.sizes)
+    if pngs.len == 0:
+        raise newException(Exception,"There was no PNG file matching the specified size.")
+
     let dest = dir / (opt.name & FILE_EXTENSION)
     var stream = openFileStream(dest,fmWrite)
     stream.write(createFileHeader(images.len).readAll)
-    writeDirectories(images, stream)
-    writePNGs(images, stream)
+    writeDirectories(pngs, stream)
+    writePNGs(pngs, stream)
     stream.close
 
     return dest
 
-proc generateICO*(images:seq[PNGResult];dir:string;options:ICOOptions ):Future[string]{.async.} = 
+proc generateICOAsync*(images:seq[ImageInfo];dir:string;options:ICOOptions ):Future[string]{.async.} = 
     # Generate the ICO file from a PNG images.
-    return generateICOSync(images,dir,options)
+    return generateICO(images,dir,options)

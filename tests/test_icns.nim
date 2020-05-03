@@ -13,5 +13,5 @@ suite "ICNS":
             result = ImageInfo( size:size, filePath:filePath )
         )
         let options = ICNSOptions()
-        let path = waitfor generateICNS(images,dir,options)
+        let path = waitfor generateICNSAsync(images,dir,options)
         check readFile(path) == readFile( getCurrentDir() / "tests" / "app.icns" )

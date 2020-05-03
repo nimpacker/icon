@@ -160,12 +160,26 @@ proc createIconBlockPackBits(typ:string,mask: string,image: string): string =
 # @param filePath Path of image (PNG) file.
 # @return Binary of icon block.
 
-proc createIconBlock(info: IconInfo,filePath: string): Future[string]{.async.} =
+proc createIconBlockAsync(info: IconInfo,filePath: string): Future[string]{.async.} =
   # doAssert existsFile(filePath),&"{filePath} not exists"
   if not existsFile(filePath):
     raise newException(IOError,&"{filePath} not exists")
   let file =  openAsync(filePath,fmRead)
   let image = await file.readAll
+  file.close
+  case info.typ:
+    of "is32","il32":
+      return createIconBlockPackBits(info.typ, info.mask, image)
+    else:
+      return createIconBlockData(info.typ, image)
+
+proc createIconBlock(info: IconInfo,filePath: string): string =
+  # doAssert existsFile(filePath),&"{filePath} not exists"
+  if not existsFile(filePath):
+    raise newException(IOError,&"{filePath} not exists")
+  let file =  open(filePath,fmRead)
+  let image =  file.readAll
+  file.close
   case info.typ:
     of "is32","il32":
       return createIconBlockPackBits(info.typ, info.mask, image)
@@ -177,7 +191,7 @@ proc createIconBlock(info: IconInfo,filePath: string): Future[string]{.async.} =
 # @param dest The path of the output destination file.
 # @return `true` if it succeeds.
 
-proc createIcon(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
+proc createIconAsync(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
     var fileSize = 0
     var body:string
     var blk:string
@@ -186,7 +200,7 @@ proc createIcon(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
       image = imageFromIconSize(info.size, images)
       if image.isNone:
         continue
-      blk = await createIconBlock(info, image.get.filePath)
+      blk = await createIconBlockAsync(info, image.get.filePath)
       body = body &  blk & $(body.len + blk.len)
       fileSize += blk.len
     if fileSize == 0:
@@ -199,6 +213,29 @@ proc createIcon(images: seq[ImageInfo],dest: string): Future[bool]{.async.} =
     stream.close
 
     return true
+
+proc createIcon(images: seq[ImageInfo],dest: string): bool =
+  var fileSize = 0
+  var body:string
+  var blk:string
+  var image:Option[png.ImageInfo]
+  for i,info in ICON_INFOS:
+    image = imageFromIconSize(info.size, images)
+    if image.isNone:
+      continue
+    blk =  createIconBlock(info, image.get.filePath)
+    body = body &  blk & $(body.len + blk.len)
+    fileSize += blk.len
+  if fileSize == 0:
+    return false
+  # Write file header and body
+  var stream = openFileStream(dest,fmWrite)
+  stream.write(createFileHeader(fileSize + HEADER_SIZE).readAll)
+  stream.write(body)
+  stream.flush
+  stream.close
+
+  return true
 
 # Unpack an icon block files from ICNS file (For debug).
 # @param src Path of the ICNS file.
@@ -237,11 +274,20 @@ proc debugUnpackIconBlocks* (src: string,dest: string): Future[void]{.async.} =
 # @param options Options.
 # @return Path of generated ICNS file.
 
-proc generateICNS*(images: seq[ImageInfo],dir: string,options: ICNSOptions): Future[string]{.async.} =
+proc generateICNS*(images: seq[ImageInfo],dir: string,options: ICNSOptions): string =
   let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
   let sizes = if options.sizes.len > 0:options.sizes else: REQUIRED_IMAGE_SIZES.toSeq
   let opt = ICNSOptions(name: name,sizes:sizes.toSeq)
   let dest = dir / (opt.name & FILE_EXTENSION)
   let targets = filterImagesBySizes(images, opt.sizes)
-  discard await createIcon(targets, dest)
+  discard createIcon(targets, dest)
+  return dest
+
+proc generateICNSAsync*(images: seq[ImageInfo],dir: string,options: ICNSOptions): Future[string]{.async.} =
+  let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
+  let sizes = if options.sizes.len > 0:options.sizes else: REQUIRED_IMAGE_SIZES.toSeq
+  let opt = ICNSOptions(name: name,sizes:sizes.toSeq)
+  let dest = dir / (opt.name & FILE_EXTENSION)
+  let targets = filterImagesBySizes(images, opt.sizes)
+  discard await createIconAsync(targets, dest)
   return dest
