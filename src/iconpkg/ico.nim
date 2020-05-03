@@ -30,8 +30,8 @@ const BI_RGB = 0
 const BPP_ALPHA = 4
 
 type ICOOptions* = object of RootObj
-    name:string
-    sizes:seq[int]
+    name*:string
+    sizes*:seq[int]
 
 proc convertPNGtoDIB[T](src:openarray[T],width:Natural,height:Natural,bpp:Natural):  seq[T] = 
     # Convert a PNG of the byte array to the DIB (Device Independent Bitmap) format.
