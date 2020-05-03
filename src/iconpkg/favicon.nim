@@ -28,19 +28,14 @@ const PNG_FILE_NAME_PREFIX = "favicon-"
 # @param prefix Prefix of an output PNG files. Start with the alphabet, can use `-` and `_`. This option is for PNG. The name of the ICO file is always `favicon.ico`.
 # @return Path of generated PNG file.
 
-proc copyImage(image:ImageInfo,dir:string,prefix:string): Future[string]{.async.} =
+proc copyImage(image:ImageInfo,dir:string,prefix:string):Future[string]{.async.}=
   let destPath = dir / (fmt"{prefix}{image.size}.png")
-  copyFile(image.filePath,destPath)
-  # let src = openAsync(image.filePath,fmRead)
-  # let destStream = newFutureStream[string]("copyImage")
-  # let dest = openAsync(destPath,fmWrite)
-  # destStream.callback = proc (future: FutureStream[string]){.closure, gcsafe.} =
-  #   if not finished(future):
-  #     waitFor dest.writeFromStream(future)
-  #   else:
-  #     dest.close
-  # waitFor src.readToStream(destStream)
-  # src.close
+  let src = openAsync(image.filePath,fmRead)
+  let destStream = newFutureStream[string]("copyImage")
+  let dest = openAsync(destPath,fmWrite)
+  await src.readToStream(destStream)
+  await dest.writeFromStream(destStream)
+  src.close
   return destPath
 
 # Generate the FAVICON PNG file from the PNG images.
