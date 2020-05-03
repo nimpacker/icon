@@ -1,4 +1,4 @@
-import sequtils,asyncdispatch,asyncstreams,asyncfile,strformat,os
+import sequtils,asyncdispatch,asyncstreams,asyncfile,strformat,os,asyncfutures
 import ./png
 import ./ico
 
@@ -29,16 +29,18 @@ const PNG_FILE_NAME_PREFIX = "favicon-"
 # @return Path of generated PNG file.
 
 proc copyImage(image:ImageInfo,dir:string,prefix:string): Future[string]{.async.} =
-  let src = openAsync(image.filePath,fmRead)
-  let destStream = newFutureStream[string]("copyImage")
   let destPath = dir / (fmt"{prefix}{image.size}.png")
-  let dest = openAsync(destPath,fmWrite)
-  destStream.callback = proc (future: FutureStream[string]){.closure, gcsafe.} =
-    if not finished(future):
-      discard dest.writeFromStream(future)
-    else:
-      dest.close
-  await src.readToStream(destStream)
+  copyFile(image.filePath,destPath)
+  # let src = openAsync(image.filePath,fmRead)
+  # let destStream = newFutureStream[string]("copyImage")
+  # let dest = openAsync(destPath,fmWrite)
+  # destStream.callback = proc (future: FutureStream[string]){.closure, gcsafe.} =
+  #   if not finished(future):
+  #     waitFor dest.writeFromStream(future)
+  #   else:
+  #     dest.close
+  # waitFor src.readToStream(destStream)
+  # src.close
   return destPath
 
 # Generate the FAVICON PNG file from the PNG images.

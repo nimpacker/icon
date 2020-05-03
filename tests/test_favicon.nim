@@ -13,4 +13,5 @@ suite "favicon":
         )
         let opts = FavOptions(name:"",pngSizes: @[],icoSizes: @[])
         var results = waitFor generateFavicon(images, getTempDir(), opts)
+        echo results
         check len(results) == 11
