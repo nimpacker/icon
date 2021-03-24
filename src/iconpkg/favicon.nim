@@ -1,25 +1,25 @@
-import sequtils,asyncdispatch,asyncstreams,asyncfile,strformat,os,asyncfutures
+import sequtils, asyncdispatch, asyncstreams, asyncfile, strformat, os, asyncfutures
 import ./png
 import ./ico
 
-# Options ot generate ICO file. 
+# Options ot generate ICO file.
 type FavOptions* = object of RootObj
-# Prefix of an output PNG files. Start with the alphabet, can use `-` and `_`. This option is for PNG. The name of the ICO file is always `favicon.ico`. 
+# Prefix of an output PNG files. Start with the alphabet, can use `-` and `_`. This option is for PNG. The name of the ICO file is always `favicon.ico`.
   name*: string
-# Size structure of PNG files to output. 
+# Size structure of PNG files to output.
   pngSizes*: seq[int]
-# Structure of an image sizes for ICO. 
+# Structure of an image sizes for ICO.
   icoSizes*: seq[int]
 
-# Sizes required for the PNG files. 
+# Sizes required for the PNG files.
 const REQUIRED_PNG_SIZES* = [32, 57, 72, 96, 120, 128, 144, 152, 195, 228]
-# Sizes required for ICO file. 
+# Sizes required for ICO file.
 const REQUIRED_ICO_SIZES* = [16, 24, 32, 48, 64]
-# Sizes required for Favicon files. 
+# Sizes required for Favicon files.
 const REQUIRED_IMAGE_SIZES* = [16, 24, 32, 48, 57, 64, 72, 96, 120, 128, 144, 152, 195, 228]
-# File name of Favicon file. 
+# File name of Favicon file.
 const ICO_FILE_NAME = "favicon"
-# Prefix of PNG file names. 
+# Prefix of PNG file names.
 const PNG_FILE_NAME_PREFIX = "favicon-"
 
 # Copy to image.
@@ -28,11 +28,11 @@ const PNG_FILE_NAME_PREFIX = "favicon-"
 # @param prefix Prefix of an output PNG files. Start with the alphabet, can use `-` and `_`. This option is for PNG. The name of the ICO file is always `favicon.ico`.
 # @return Path of generated PNG file.
 
-proc copyImage(image:ImageInfo,dir:string,prefix:string):Future[string]{.async.}=
+proc copyImage(image: ImageInfo, dir: string, prefix: string): Future[string]{.async.} =
   let destPath = dir / (fmt"{prefix}{image.size}.png")
-  let src = openAsync(image.filePath,fmRead)
+  let src = openAsync(image.filePath, fmRead)
   let destStream = newFutureStream[string]("copyImage")
-  let dest = openAsync(destPath,fmWrite)
+  let dest = openAsync(destPath, fmWrite)
   await src.readToStream(destStream)
   await dest.writeFromStream(destStream)
   src.close
@@ -45,10 +45,10 @@ proc copyImage(image:ImageInfo,dir:string,prefix:string):Future[string]{.async.}
 # @param sizes Size structure of PNG files to output.
 # @return Path of the generated files.
 
-proc generatePNG*(images:seq[ImageInfo],dir:string,prefix:string,sizes:seq[int]): Future[seq[string]] {.async.} =
+proc generatePNG*(images: seq[ImageInfo], dir: string, prefix: string, sizes: seq[int]): Future[seq[string]] {.async.} =
 
   let targets = filterImagesBySizes(images, sizes)
-  for image in targets: 
+  for image in targets:
     result.add(await copyImage(image, dir, prefix))
 
 # Generate a FAVICON image files (ICO and PNG) from the PNG images.
@@ -57,11 +57,12 @@ proc generatePNG*(images:seq[ImageInfo],dir:string,prefix:string,sizes:seq[int])
 # @param options Options.
 # @return Path of the generated files.
 
-proc generateFavicon*(images:seq[ImageInfo],dir:string,options:FavOptions = default(FavOptions)): Future[seq[string]]{.async.} =
-  let name =  if options.name.len > 0: options.name else: PNG_FILE_NAME_PREFIX
-  let pngSizes = if options.pngSizes.len > 0:options.pngSizes else: REQUIRED_PNG_SIZES.toSeq
-  let icoSizes = if options.icoSizes.len > 0:options.icoSizes else: REQUIRED_ICO_SIZES.toSeq
-  let opt = FavOptions(name: name,pngSizes:pngSizes,icoSizes:icoSizes)
+proc generateFavicon*(images: seq[ImageInfo], dir: string, options: FavOptions = default(FavOptions)): Future[seq[
+    string]]{.async.} =
+  let name = if options.name.len > 0: options.name else: PNG_FILE_NAME_PREFIX
+  let pngSizes = if options.pngSizes.len > 0: options.pngSizes else: REQUIRED_PNG_SIZES.toSeq
+  let icoSizes = if options.icoSizes.len > 0: options.icoSizes else: REQUIRED_ICO_SIZES.toSeq
+  let opt = FavOptions(name: name, pngSizes: pngSizes, icoSizes: icoSizes)
   result = await generatePNG(images, dir, opt.name, opt.pngSizes)
-  let iconOpts = ICOOptions( name: ICO_FILE_NAME,sizes: opt.icoSizes)
-  result.add(  generateICO(filterImagesBySizes(images,opt.icoSizes), dir,iconOpts))
+  let iconOpts = ICOOptions(name: ICO_FILE_NAME, sizes: opt.icoSizes)
+  result.add(generateICO(filterImagesBySizes(images, opt.icoSizes), dir, iconOpts))

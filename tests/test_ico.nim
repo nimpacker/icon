@@ -10,9 +10,9 @@ import os
 import iconpkg/ico
 
 test "ico":
-  const testDir = currentSourcePath.parentDir() #/ ".." / ".." / "tests" 
+  const testDir = currentSourcePath.parentDir() #/ ".." / ".." / "tests"
   const dir = getTempDir()
   const nim_logo = testDir / "logo_bw.png"
-  let img = ImageInfo(filePath:nim_logo,size:32)
-  let path = generateICO(@[img],dir)
+  let img = ImageInfo(filePath: nim_logo, size: 32)
+  let path = generateICO(@[img], dir)
   assert readFile(path) == readFile(testDir / "app.ico")

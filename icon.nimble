@@ -15,5 +15,3 @@ bin           = @["icon"]
 requires "nim >= 1.2.0"
 requires "nimPNG"
 requires "struct"
-# requires "https://github.com/numforge/laser.git"
-# requires "arraymancer"
