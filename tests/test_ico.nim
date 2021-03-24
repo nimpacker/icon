@@ -14,6 +14,5 @@ test "ico":
   const dir = getTempDir()
   const nim_logo = testDir / "logo_bw.png"
   let img = ImageInfo(filePath:nim_logo,size:32)
-  let opts = ICOOptions()
-  let path = generateICO(@[img],dir,opts)
+  let path = generateICO(@[img],dir)
   assert readFile(path) == readFile(testDir / "app.ico")

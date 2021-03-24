@@ -11,7 +11,6 @@ suite "favicon":
             let filePath = getCurrentDir() / "examples/data" /  $size & ".png"
             result = ImageInfo(size:size, filePath:filePath)
         )
-        let opts = FavOptions(name:"",pngSizes: @[],icoSizes: @[])
-        var results = waitFor generateFavicon(images, getTempDir(), opts)
+        var results = waitFor generateFavicon(images, getTempDir())
         echo results
         check len(results) == 11

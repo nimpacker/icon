@@ -274,7 +274,7 @@ proc debugUnpackIconBlocks* (src: string,dest: string): Future[void]{.async.} =
 # @param options Options.
 # @return Path of generated ICNS file.
 
-proc generateICNS*(images: seq[ImageInfo],dir: string,options: ICNSOptions): string =
+proc generateICNS*(images: seq[ImageInfo],dir: string,options: ICNSOptions = default(ICNSOptions)): string =
   let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
   let sizes = if options.sizes.len > 0:options.sizes else: REQUIRED_IMAGE_SIZES.toSeq
   let opt = ICNSOptions(name: name,sizes:sizes.toSeq)
@@ -283,7 +283,7 @@ proc generateICNS*(images: seq[ImageInfo],dir: string,options: ICNSOptions): str
   discard createIcon(targets, dest)
   return dest
 
-proc generateICNSAsync*(images: seq[ImageInfo],dir: string,options: ICNSOptions): Future[string]{.async.} =
+proc generateICNSAsync*(images: seq[ImageInfo],dir: string,options: ICNSOptions = default(ICNSOptions)): Future[string]{.async.} =
   let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
   let sizes = if options.sizes.len > 0:options.sizes else: REQUIRED_IMAGE_SIZES.toSeq
   let opt = ICNSOptions(name: name,sizes:sizes.toSeq)

@@ -57,7 +57,7 @@ proc generatePNG*(images:seq[ImageInfo],dir:string,prefix:string,sizes:seq[int])
 # @param options Options.
 # @return Path of the generated files.
 
-proc generateFavicon*(images:seq[ImageInfo],dir:string,options:FavOptions): Future[seq[string]]{.async.} =
+proc generateFavicon*(images:seq[ImageInfo],dir:string,options:FavOptions = default(FavOptions)): Future[seq[string]]{.async.} =
   let name =  if options.name.len > 0: options.name else: PNG_FILE_NAME_PREFIX
   let pngSizes = if options.pngSizes.len > 0:options.pngSizes else: REQUIRED_PNG_SIZES.toSeq
   let icoSizes = if options.icoSizes.len > 0:options.icoSizes else: REQUIRED_ICO_SIZES.toSeq

@@ -137,12 +137,12 @@ proc writePNGs*(pngs:openarray[PNGResult],stream:var FileStream) =
         stream.write(cast[string](dib))
         stream.flush
 
-proc readPNGs(images: seq[ImageInfo], sizes: seq[int]): seq[PNGResult] =
+proc readPNGs(images: seq[ImageInfo], sizes: seq[int]): seq[PNGResult[string]] =
   let targets = filterImagesBySizes(images, sizes)
-  return targets.map(proc (image:ImageInfo):PNGResult = loadPNG32(image.filePath))
+  return targets.map(proc (image:ImageInfo):PNGResult[string] = loadPNG32(image.filePath))
 
 
-proc generateICO*(images:seq[ImageInfo];dir:string;options:ICOOptions ):string = 
+proc generateICO*(images:seq[ImageInfo];dir:string;options:ICOOptions = default(ICOOptions) ):string = 
     # Generate the ICO file from a PNG images.
     let name =  if options.name.len > 0: options.name else: DEFAULT_FILE_NAME
     let sizes = if options.sizes.len > 0:options.sizes else:REQUIRED_IMAGE_SIZES.toSeq
@@ -160,6 +160,6 @@ proc generateICO*(images:seq[ImageInfo];dir:string;options:ICOOptions ):string =
 
     return dest
 
-proc generateICOAsync*(images:seq[ImageInfo];dir:string;options:ICOOptions ):Future[string]{.async.} = 
+proc generateICOAsync*(images:seq[ImageInfo];dir:string;options:ICOOptions =default(ICOOptions) ):Future[string]{.async.} = 
     # Generate the ICO file from a PNG images.
     return generateICO(images,dir,options)

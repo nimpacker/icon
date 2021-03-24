@@ -12,6 +12,5 @@ suite "ICNS":
             let filePath = getCurrentDir() / "./examples/data" /  $size & ".png"
             result = ImageInfo( size:size, filePath:filePath )
         )
-        let options = ICNSOptions()
-        let path = waitfor generateICNSAsync(images,dir,options)
+        let path = waitfor generateICNSAsync(images,dir)
         check readFile(path) == readFile( getCurrentDir() / "tests" / "app.icns" )
