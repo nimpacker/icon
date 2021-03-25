@@ -6,7 +6,7 @@ description   = "Generate icon files from PNG files."
 license       = "MIT"
 srcDir        = "src"
 installExt    = @["nim"]
-bin           = @["icon"]
+
 
 
 
