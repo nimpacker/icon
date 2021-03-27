@@ -8,7 +8,7 @@ import asyncdispatch
 suite "ICNS":
   test "generateICNS":
     let dir = getTempDir()
-    const root =  currentSourcePath.parentDir.parentDir
+    const root = currentSourcePath.parentDir.parentDir
     let images = REQUIRED_IMAGE_SIZES.map(proc (size: int): ImageInfo{.closure.} =
       let filePath = root / "./examples/data" / $size & ".png"
       echo filePath
