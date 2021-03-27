@@ -89,6 +89,7 @@ proc createFileHeader(fileSize: int): Stream =
   result = newStringStream()
   result.write FILE_HEADER_ID
   result.write extract_32(fileSize.uint32, bigEndian)
+  result.setPosition(0)
 
 # Create the Icon header in ICNS file.
 # @param type Type of the icon.
@@ -99,6 +100,7 @@ proc createIconHeader(typ: string, imageSize: int): Stream =
   result = newStringStream()
   result.write typ
   result.write extract_32(uint32(HEADER_SIZE + imageSize), bigEndian)
+  result.setPosition(0)
 
 
 # Create a color and mask data.
@@ -141,7 +143,7 @@ proc createIconBlockPackBitsBodies(png: string): PackBitBody =
 proc createIconBlockData(typ: string, image: string): string =
   var header = createIconHeader(typ, image.len)
   let headerData = header.readAll
-  result = headerData & image & $(headerData.len + image.len)
+  result = headerData & image
 
 # Create an icon blocks (Color and mask) for PackBits.
 # @param type Type of the icon in color block.
@@ -153,7 +155,7 @@ proc createIconBlockPackBits(typ: string, mask: string, image: string): string =
   let bodies = createIconBlockPackBitsBodies(image)
   let colorBlock = createIconBlockData(typ, cast[string](bodies.colors))
   let maskBlock = createIconBlockData(mask, cast[string](bodies.masks))
-  result = colorBlock & maskBlock & $(colorBlock.len + maskBlock.len)
+  result = colorBlock & maskBlock
 
 # Create an icon block.
 # @param info Icon information in ICNS.
@@ -201,7 +203,7 @@ proc createIconAsync(images: seq[ImageInfo], dest: string): Future[bool]{.async.
     if image.isNone:
       continue
     blk = await createIconBlockAsync(info, image.get.filePath)
-    body = body & blk & $(body.len + blk.len)
+    body = body & blk
     fileSize += blk.len
   if fileSize == 0:
     return false
@@ -224,7 +226,7 @@ proc createIcon(images: seq[ImageInfo], dest: string): bool =
     if image.isNone:
       continue
     blk = createIconBlock(info, image.get.filePath)
-    body = body & blk & $(body.len + blk.len)
+    body = body & blk
     fileSize += blk.len
   if fileSize == 0:
     return false

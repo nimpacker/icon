@@ -1,4 +1,29 @@
-#### joe made this: http://goel.io/joe
+*
+!**/
+!*.*
 
-#### nim ####
+# Cache
 nimcache/
+rnimcache/
+dnimcache/
+
+*.o
+!/icons/*.o
+*.obj
+*.ilk
+*.exp
+*.pdb
+*.lib
+*.dll
+*.exe
+*.so
+*.dylib
+*.zip
+*.iss
+*.log
+*.pdb
+.DS_Store
+*.out
+src/htmldocs
+*.nims
+htmldocs
