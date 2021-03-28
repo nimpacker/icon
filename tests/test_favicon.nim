@@ -1,14 +1,15 @@
 import unittest
-import iconpkg/favicon
+import icon/favicon
 import sequtils
 import asyncdispatch
-import iconpkg/png
+import icon/png
 import os
 
 suite "favicon":
   test "generateFavicon":
+    const root = currentSourcePath.parentDir.parentDir
     let images = REQUIRED_IMAGE_SIZES.map(proc(size: int): ImageInfo{.closure.} =
-      let filePath = getCurrentDir() / "examples/data" / $size & ".png"
+      let filePath = root / "examples/data" / $size & ".png"
       result = ImageInfo(size: size, filePath: filePath)
     )
     var results = waitFor generateFavicon(images, getTempDir())

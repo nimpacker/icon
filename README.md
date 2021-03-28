@@ -23,17 +23,29 @@ $ nimble install https://github.com/bung87/icon
 ## Usage  
 
 ``` Nim 
-import icon
+import icon/icns
 import asyncdispatch
+import sequtils
 
 let dir = getTempDir()
-let images = REQUIRED_IMAGE_SIZES.map(proc (size:int):ImageInfo{.closure.} =
+let images = icns.REQUIRED_IMAGE_SIZES.map(proc (size:int):ImageInfo{.closure.} =
     let filePath = getCurrentDir() / "./examples/data" /  $size & ".png"
     result = ImageInfo( size:size, filePath:filePath )
 )
-let options = ICNSOptions()
-let path = waitfor generateICNS(images,dir,options)
+let path = waitfor generateICNS(images,dir)
+# or generateICNSAsync(images, dir)
 
+import asyncdispatch
+import icon/ico
+import sequtils
+
+let images = ico.REQUIRED_IMAGE_SIZES.map(proc (size: int): ImageInfo{.closure.} =
+      let filePath = root / "./examples/data" / $size & ".png"
+      echo filePath
+      result = ImageInfo(size: size, filePath: filePath)
+    )
+let path = generateICO(images, dir)
+# or generateICOAsync(images, dir)
 ```
 
 

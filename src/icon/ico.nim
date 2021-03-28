@@ -6,7 +6,7 @@ import ./png
 export png
 export nimPNG
 # Sizes required for the ICO file.
-const REQUIRED_IMAGE_SIZES = [16, 24, 32, 48, 64, 128, 256]
+const REQUIRED_IMAGE_SIZES* = [16, 24, 32, 48, 64, 128, 256]
 
 # Default name of ICO file.
 const DEFAULT_FILE_NAME = "app"
