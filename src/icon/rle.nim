@@ -1,14 +1,14 @@
 import sequtils, math
 # Max length of PackBits literal.
 const MAX_LITERAL_LENGTH = 127
- #
- # Copies the array to the target array at the specified position and size.
- # @param src Byte array of copy source.
- # @param srcBegin  Copying start position of source.
- # @param dest Bayte array of copy destination.
- # @param destBegin Writing start position of destinnation.
- # @param size Size of copy bytes.
- #
+  #
+  # Copies the array to the target array at the specified position and size.
+  # @param src Byte array of copy source.
+  # @param srcBegin  Copying start position of source.
+  # @param dest Bayte array of copy destination.
+  # @param destBegin Writing start position of destinnation.
+  # @param size Size of copy bytes.
+  #
 proc arrayCopy(src: seq[int], srcBegin: int, dest: var seq[int], destBegin: int, size: int) =
   if src.len <= srcBegin or src.len < size or dest.len <= destBegin or dest.len < size:
     return
