@@ -129,9 +129,9 @@ proc createIconBlockPackBitsBodies(png: string): PackBitBody =
   let packedR = packICNS(cast[seq[int]](r))
   let packedG = packICNS(cast[seq[int]](g))
   let packedB = packICNS(cast[seq[int]](b))
-  discard results.colors.concat(cast[seq[char]](packedR))
-  discard results.colors.concat(cast[seq[char]](packedG))
-  discard results.colors.concat(cast[seq[char]](packedB))
+  results.colors.add(cast[seq[char]](packedR))
+  results.colors.add(cast[seq[char]](packedG))
+  results.colors.add(cast[seq[char]](packedB))
 
   return results
 

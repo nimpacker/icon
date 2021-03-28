@@ -1,7 +1,7 @@
 import unittest
 import os
 import icon
-import iconpkg/icns
+import icon/icns
 import sequtils
 import asyncdispatch
 
