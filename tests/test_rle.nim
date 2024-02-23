@@ -1,6 +1,5 @@
 import unittest
-import iconpkg/rle
-import sequtils
+import icon/rle
 
 suite "RLE":
     test "pack Bits Normaly":
