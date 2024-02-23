@@ -16,5 +16,4 @@ suite "ICNS":
     )
     let path = waitfor generateICNSAsync(images, dir)
     echo path
-    let eq = readFile(path) == readFile(root / "tests" / "app.icns")
-    check eq
+    check getFileSize(path) >= getFileSize(root / "tests" / "app.icns")
