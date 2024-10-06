@@ -126,6 +126,13 @@ proc createFileHeader*(count: int): Stream =
   result.flush()
   result.setPosition(0)
 
+func toString*(bytes: openArray[char]): string {.inline.} =
+  ## Converts a byte sequence to the corresponding string.
+  let length = bytes.len
+  if length > 0:
+    result = newString(length)
+    copyMem(result.cstring, bytes[0].unsafeAddr, length)
+
 proc writePNGs*(pngs: openarray[PNGResult], stream: var FileStream) =
   # Write PNG data to the stream.
   var header: Stream
@@ -134,7 +141,7 @@ proc writePNGs*(pngs: openarray[PNGResult], stream: var FileStream) =
     header = createBitmapInfoHeader(png, BI_RGB)
     stream.write(header.readAll)
     dib = convertPNGtoDIB(png.data, png.width, png.height, BPP_ALPHA)
-    stream.write(cast[string](dib))
+    stream.write(toString(dib))
     stream.flush
 
 proc readPNGs(images: seq[ImageInfo], sizes: seq[int]): seq[PNGResult[string]] =

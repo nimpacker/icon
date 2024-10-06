@@ -102,6 +102,13 @@ proc createIconHeader(typ: string, imageSize: int): Stream =
   result.write extract_32(uint32(HEADER_SIZE + imageSize), bigEndian)
   result.setPosition(0)
 
+proc toSeqInt(a: seq[char]): seq[int] =
+  for i in a:
+    result.add i.int
+
+proc toSeqChar(a: seq[int]): seq[char] =
+  for i in a:
+    result.add i.char
 
 # Create a color and mask data.
 # @param image Binary of image file.
@@ -126,12 +133,12 @@ proc createIconBlockPackBitsBodies(png: string): PackBitBody =
     i += 4
 
   # Compress
-  let packedR = packICNS(cast[seq[int]](r))
-  let packedG = packICNS(cast[seq[int]](g))
-  let packedB = packICNS(cast[seq[int]](b))
-  results.colors.add(cast[seq[char]](packedR))
-  results.colors.add(cast[seq[char]](packedG))
-  results.colors.add(cast[seq[char]](packedB))
+  let packedR = packICNS(toSeqInt(r))
+  let packedG = packICNS(toSeqInt(g))
+  let packedB = packICNS(toSeqInt(b))
+  results.colors.add(toSeqChar(packedR))
+  results.colors.add(toSeqChar(packedG))
+  results.colors.add(toSeqChar(packedB))
 
   return results
 
@@ -151,10 +158,17 @@ proc createIconBlockData(typ: string, image: string): string =
 # @param image Binary of image file.
 # @return Binary of icon block.
 
+func toString*(bytes: openArray[char]): string {.inline.} =
+  ## Converts a byte sequence to the corresponding string.
+  let length = bytes.len
+  if length > 0:
+    result = newString(length)
+    copyMem(result.cstring, bytes[0].unsafeAddr, length)
+
 proc createIconBlockPackBits(typ: string, mask: string, image: string): string =
   let bodies = createIconBlockPackBitsBodies(image)
-  let colorBlock = createIconBlockData(typ, cast[string](bodies.colors))
-  let maskBlock = createIconBlockData(mask, cast[string](bodies.masks))
+  let colorBlock = createIconBlockData(typ, toString(bodies.colors))
+  let maskBlock = createIconBlockData(mask, toString(bodies.masks))
   result = colorBlock & maskBlock
 
 # Create an icon block.
@@ -194,7 +208,6 @@ proc createIconBlock(info: IconInfo, filePath: string): string =
 # @return `true` if it succeeds.
 
 proc createIconAsync(images: seq[ImageInfo], dest: string): Future[bool]{.async.} =
-  var fileSize = 0
   var body: string
   var blk: string
   var image: Option[png.ImageInfo]
@@ -204,12 +217,11 @@ proc createIconAsync(images: seq[ImageInfo], dest: string): Future[bool]{.async.
       continue
     blk = await createIconBlockAsync(info, image.get.filePath)
     body = body & blk
-    fileSize += blk.len
-  if fileSize == 0:
+  if body.len == 0:
     return false
   # Write file header and body
   var stream = openFileStream(dest, fmWrite)
-  stream.write(createFileHeader(fileSize + HEADER_SIZE).readAll)
+  stream.write(createFileHeader(body.len + HEADER_SIZE).readAll)
   stream.write(body)
   stream.flush
   stream.close

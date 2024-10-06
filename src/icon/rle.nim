@@ -153,7 +153,6 @@ proc packICNS*(src: seq[int]): seq[int] =
       repeatedBytes < 130
     ):
       inc repeatedBytes
-      inc repeatedBytes
       inc input
 
 
