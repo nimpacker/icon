@@ -53,7 +53,7 @@ const FILE_EXTENSION = ".icns"
 # Information of the images, Mac OS 8.x (il32, is32, l8mk, s8mk) is unsupported.
 # If icp4, icp5, icp6 is present, Icon will not be supported because it can not be set as Folder of Finder.
 
-let ICON_INFOS: array[10, IconInfo] = [
+let ICON_INFOS: array[11, IconInfo] = [
   # Normal
   IconInfo(typ: "ic07", size: 128),
   IconInfo(typ: "ic08", size: 256),
@@ -66,9 +66,14 @@ let ICON_INFOS: array[10, IconInfo] = [
   IconInfo(typ: "ic13", size: 256),
   IconInfo(typ: "ic14", size: 512),
 
+  # MacOS 10.7
+  IconInfo(typ: "icp4", size: 16),
+  IconInfo(typ: "icp5", size: 32),
+  IconInfo(typ: "icp6", size: 64),
+
   # Mac OS 8.5
-  IconInfo(typ: "is32", mask: "s8mk", size: 16),
-  IconInfo(typ: "il32", mask: "l8mk", size: 32)
+  # IconInfo(typ: "is32", mask: "s8mk", size: 16),
+  # IconInfo(typ: "il32", mask: "l8mk", size: 32)
 ]
 
 # Select the support image from the icon size.
